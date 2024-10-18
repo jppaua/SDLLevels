@@ -1,3 +1,10 @@
+/*
+Group Members:
+1. John Paua
+2. Colton Hennessye
+3. Ana Patel
+*/
+
 #include "GameController.h"
 #include "Renderer.h"
 #include "SpriteAnim.h"
