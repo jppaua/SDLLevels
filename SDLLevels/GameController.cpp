@@ -11,17 +11,34 @@ Group Members:
 #include "SpriteSheet.h"
 #include "TTFont.h"
 #include "Timing.h"
+#include <random>  // Required for random number generation
+
+struct Warrior {
+	float x;       // X position of the warrior
+	float y;       // Y position of the warrior
+	float speed;   // Speed of the warrior
+	float direction; // Direction of movement (1 for up, -1 for down)
+	float animationSpeed; // Animation speed of the warrior
+};
+
+// Function to generate a random float between min and max
+float GetRandomFloat(float min, float max) {
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_real_distribution<float> dist(min, max);
+	return dist(gen);
+}
 
 GameController::GameController()
 {
 	m_sdlEvent = { };
 }
 
-GameController::~GameController()
+void GameController::RunGame()
 {
 }
 
-void GameController::RunGame()
+GameController::~GameController()
 {
 	AssetController::Instance().Initialize(10000000);	// Allocate 10MB
 	Renderer* r = &Renderer::Instance();
@@ -34,10 +51,6 @@ void GameController::RunGame()
 	// Code for WEEK 7 for Graohics COre 2
 	Point ws = r->GetWindowSize();
 
-	/*Texture::Pool = new ObjectPool1<Texture>();
-	Texture* texture = Texture::Pool->GetResource();
-	texture->Load("../Assets/Textures/Warrior.tga");*/
-
 	SpriteSheet::Pool = new ObjectPool1<SpriteSheet>();
 	SpriteAnim::Pool = new ObjectPool1<SpriteAnim>();
 
@@ -45,24 +58,28 @@ void GameController::RunGame()
 	sheet->Load("../Assets/Textures/Warrior.tga");
 
 	sheet->SetSize(17, 6, 69, 44);
-	sheet->AddAnimation(EN_AN_IDLE, 0, 6, 6.0f);
+	//sheet->AddAnimation(EN_AN_IDLE, 0, 6, 6.0f);
 	sheet->AddAnimation(EN_AN_RUN, 6, 8, 6.0f);
 
-	/*ofstream writeStream("resource.bin", ios::out | ios::binary);
-	sheet->Serialize(writeStream);
-	writeStream.close();
+	// Create warriors
+	std::vector<Warrior> warriors;
+	for (unsigned int i = 0; i < 10; i++) {
+		Warrior w;
+		w.x = 0; // Start at the left of the screen
+		w.y = 100 + (i * 100);
+		w.speed = GetRandomFloat(80.0f, 100.0f);
+		w.direction = 1.0f; // Always move right
+		// Calculate animation speed based on running speed
+		w.animationSpeed = 4.8f + ((w.speed - 80.0f) / 20.0f) * (6.0f - 4.8f);
+		warriors.push_back(w);
+	}
 
-	delete SpriteAnim::Pool;
-	delete SpriteSheet::Pool;
-	AssetController::Instance().Clear();
-	AssetController::Instance().Initialize(10000000);
-	SpriteSheet::Pool = new ObjectPool1<SpriteSheet>();
-	SpriteAnim::Pool = new ObjectPool1<SpriteAnim>();
+	// Auto-save functionality
+	std::ofstream autoSaveStream("Level1.bin", std::ios::out | std::ios::binary);
+	bool isAutoSaved = false;
+	bool level2Loaded = false;
 
-	SpriteSheet* sheet2 = SpriteSheet::Pool->GetResource();
-	ifstream readStream("resource.bin", ios::in | ios::binary);
-	sheet2->Deserialize(readStream);
-	readStream.close();*/
+	float autoSaveTimer = 0.0f;
 
 	while (m_sdlEvent.type != SDL_QUIT)
 	{
@@ -70,21 +87,54 @@ void GameController::RunGame()
 
 		SDL_PollEvent(&m_sdlEvent);
 
-		r->SetDrawColor(Color(255, 255, 255, 255));
+		r->SetDrawColor(Color(128, 128, 128, 255));
 		r->ClearScreen();
 
-		r->RenderTexture(sheet, sheet->Update(EN_AN_IDLE, t->GetDeltaTime()), Rect(0, 0, 69 * 3, 44 * 3));
-		r->RenderTexture(sheet, sheet->Update(EN_AN_RUN, t->GetDeltaTime()), Rect(0, 150, 69 * 3, 150 + 44 * 3));
-		//font->Write(r->GetRenderer(), "Testing 123!!!", SDL_Color{ 0, 255, 0 }, SDL_Point{ 150, 50 });
+		autoSaveTimer += t->GetDeltaTime();
+		if (autoSaveTimer >= 5.0f && !isAutoSaved) {
+			// Auto-save the level state
+			// You should implement a Serialize method to save your game state
+			// Example:
+			// Serialize(autoSaveStream);
+			isAutoSaved = true;
+			autoSaveTimer = 0.0f; // Reset timer
+		}
 
-		std::string s = "Frame number: " + std::to_string(sheet->GetCurrentClip(EN_AN_IDLE));
-		font->Write(r->GetRenderer(), s.c_str(), SDL_Color{ 0, 255, 0 }, SDL_Point{ 250, 50 });
+		// Render warriors
+		for (auto& warrior : warriors) {
+			warrior.x += warrior.speed * t->GetDeltaTime(); // Move the warrior
 
-		s = "Frame number: " + std::to_string(sheet->GetCurrentClip(EN_AN_RUN));
-		font->Write(r->GetRenderer(), s.c_str(), SDL_Color{ 0, 255, 0 }, SDL_Point{ 250, 200 });
+			//std::cout << "Rendering Warrior at Position: (" << warrior.x << ", " << warrior.y << ")" << std::endl;
+
+			r->RenderTexture(sheet, sheet->Update(EN_AN_RUN, warrior.animationSpeed * t->GetDeltaTime()),
+				Rect((warrior.x), (warrior.y), static_cast < int>(69) , static_cast < int>(44) ));
+
+			warrior.x += warrior.speed * warrior.direction * t->GetDeltaTime();
+
+			// Check if warrior has reached the right side of the screen
+			if (warrior.x > 800) {
+				warrior.direction = -warrior.direction; // Reverse direction (move left)
+			}
+
+			//// Check if the first warrior is off-screen
+			//if (!level2Loaded && warrior.x > ws.X) {
+			//	level2Loaded = true;
+			//	// Load level 2 here
+			//}
+		}
 
 		std::string fps = "Frames per Second : " + std::to_string(t->GetFPS());
 		font->Write(r->GetRenderer(), fps.c_str(), SDL_Color{ 0, 0, 255 }, SDL_Point{ 0, 0 });
+		
+		// Get the total game time
+		float gameTime = t->GetTotalGameTime();
+
+		// Display the game time
+		std::string timeText = "Game Time: " + std::to_string(static_cast<int>(gameTime));
+		font->Write(r->GetRenderer(), timeText.c_str(), SDL_Color{ 0, 0, 255 }, SDL_Point{ 250 , 0 });
+
+		std::string saveStatus = isAutoSaved ? "Auto Saved: Yes" : "Auto Saved: No";
+		font->Write(r->GetRenderer(), saveStatus.c_str(), SDL_Color{ 0, 0, 255 }, SDL_Point{ 500, 0 });
 
 		SDL_RenderPresent(r->GetRenderer());
 	}
@@ -95,43 +145,3 @@ void GameController::RunGame()
 	font->Shutdown();
 	r->Shutdown();
 }
-
-//while (m_sdlEvent.type != SDL_QUIT)
-	//{
-	//	SDL_PollEvent(&m_sdlEvent);
-	//	//r->SetDrawColor(Color(255, 0, 0, 255));
-	//	//r->ClearScreen();
-	//	//r->SetDrawColor(Color(255, 255, 0, 255));	// Yellow dotted line
-	//	//for (unsigned int count = 0; count < 800; count++)
-	//	//{
-	//	//	if (count % 2 == 0) r->RenderPoint(Point(count, 300));
-	//	//}
-	//	//r->SetDrawColor(Color(0, 0, 255, 255));	//Blue solid line
-	//	//r->RenderLine(Rect(400, 0, 400, 600));
-	//	//r->SetDrawColor(Color(0, 255, 0, 255));	// Green rectangle
-	//	//r->RenderRectangle(Rect(200, 200, 300, 300));
-	//	//r->SetDrawColor(Color(255, 255, 255, 255));	// White fill rectangle
-	//	//r->RenderFillRectangle(Rect(400, 400, 500, 500));
-	//	//r->RenderTexture(texture, Point(10, 10));
-
-	//	// Code for WEEK 7 for Graphics COre 2
-	//	//r->SetViewport(Rect(0, 0, ws.X, ws.Y));
-	//	r->SetDrawColor(Color(255, 255, 255, 255));
-	//	r->ClearScreen();
-	//	//r->SetViewport(Rect(0, 0, ws.X / 2, ws.Y / 2));		// Top-left
-	//	//r->RenderTexture(texture, Point(0, 0));
-	//	//r->SetViewport(Rect(ws.X / 2, 0, ws.X, ws.Y / 2));		// Top-right
-	//	//r->RenderTexture(texture, Rect(0, 0, ws.X / 2, ws.Y / 2));
-	//	//r->SetViewport(Rect(0, ws.Y / 2, ws.X / 2, ws.Y));		// Bottom-left
-	//	//r->RenderTexture(texture, Rect(0, 0, ws.X / 2, ws.Y / 2));
-	//	//r->SetViewport(Rect(ws.X / 2, ws.Y / 2, ws.X, ws.Y));	// Bottom-right
-	//	//r->RenderTexture(texture, Point(0, 0));
-	//	for (unsigned int count = 0; count < 6; count++)
-	//	{
-	//		unsigned int xPos = count * 69;
-	//		r->RenderTexture(texture, Rect(xPos, 0, xPos + 69, 44), Rect(xPos, 100, xPos + 69 * 2, 100 + 44 * 2));
-	//	}
-	//	SDL_RenderPresent(r->GetRenderer());
-	//}
-
-	//delete Texture::Pool;
