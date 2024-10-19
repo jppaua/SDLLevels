@@ -12,6 +12,7 @@ public:
 
 	// Methods
 	void RunGame();
+	void LoadLevel2();
 
 private:
 	// Members

@@ -38,12 +38,19 @@ void GameController::RunGame()
 {
 }
 
+void GameController::LoadLevel2() {
+	// Renderer::Instance().SetDrawColor(Color(0, 128, 0, 255));
+	Renderer* r = &Renderer::Instance();
+	//r->Initialize(1920, 1080);
+	r->SetDrawColor(Color(0, 128, 0, 255));
+}
+
 GameController::~GameController()
 {
 	AssetController::Instance().Initialize(10000000);	// Allocate 10MB
 	Renderer* r = &Renderer::Instance();
 	Timing* t = &Timing::Instance();
-	r->Initialize(800, 600);
+	r->Initialize(1920, 1080);
 
 	TTFont* font = new TTFont();
 	font->Initialize(20);
@@ -66,12 +73,13 @@ GameController::~GameController()
 	for (unsigned int i = 0; i < 10; i++) {
 		Warrior w;
 		w.x = 0; // Start at the left of the screen
-		w.y = 100 + (i * 100);
+		w.y = 10 + (i * 100);
 		w.speed = GetRandomFloat(80.0f, 100.0f);
 		w.direction = 1.0f; // Always move right
 		// Calculate animation speed based on running speed
 		w.animationSpeed = 4.8f + ((w.speed - 80.0f) / 20.0f) * (6.0f - 4.8f);
 		warriors.push_back(w);
+		SDL_FLIP_HORIZONTAL;
 	}
 
 	// Auto-save functionality
@@ -87,7 +95,7 @@ GameController::~GameController()
 
 		SDL_PollEvent(&m_sdlEvent);
 
-		r->SetDrawColor(Color(128, 128, 128, 255));
+		//r->SetDrawColor(Color(128, 128, 128, 255));
 		r->ClearScreen();
 
 		autoSaveTimer += t->GetDeltaTime();
@@ -100,27 +108,55 @@ GameController::~GameController()
 			autoSaveTimer = 0.0f; // Reset timer
 		}
 
+		bool isFirstWarriorOffScreen = false;
+
 		// Render warriors
 		for (auto& warrior : warriors) {
-			warrior.x += warrior.speed * t->GetDeltaTime(); // Move the warrior
+
+			// Set the background color based on whether the first warrior is off-screen
+			if (isFirstWarriorOffScreen) {
+				//r->SetDrawColor(Color(0, 128, 0, 255));  // Green background
+				//for (unsigned int i = 0; i < warriors.size(); ++i) {
+				//	warriors[i].x = 0;  // Reset to the starting X position (left of the screen)
+				//	warriors[i].y = 10 + (i * 100);  // Reset the Y position with spacing
+				//	warriors[i].speed = GetRandomFloat(80.0f, 100.0f);  // Re-randomize speed
+				//}
+				r->SetDrawColor(Color(0, 128, 0, 255));
+			}
+			else {
+				r->SetDrawColor(Color(128, 128, 128, 255));  // Default grey background
+			}
+
+			warrior.x += warrior.speed * warrior.direction * t->GetDeltaTime(); // Move the warrior
 
 			//std::cout << "Rendering Warrior at Position: (" << warrior.x << ", " << warrior.y << ")" << std::endl;
 
 			r->RenderTexture(sheet, sheet->Update(EN_AN_RUN, warrior.animationSpeed * t->GetDeltaTime()),
-				Rect((warrior.x), (warrior.y), static_cast < int>(69) , static_cast < int>(44) ));
+				Rect((warrior.x), (warrior.y), static_cast < int>(69 * 1.8) , static_cast < int>(44 * 1.8)));
 
 			warrior.x += warrior.speed * warrior.direction * t->GetDeltaTime();
 
 			// Check if warrior has reached the right side of the screen
-			if (warrior.x > 800) {
+			/*if (warrior.x > 1920) {
 				warrior.direction = -warrior.direction; // Reverse direction (move left)
-			}
+			}*/
 
-			//// Check if the first warrior is off-screen
-			//if (!level2Loaded && warrior.x > ws.X) {
-			//	level2Loaded = true;
-			//	// Load level 2 here
-			//}
+			int i = 0;
+
+			// Check if the first warrior is off-screen
+			if (i == 0 && warrior.x > r->GetWindowSize().X) 
+			{
+				isFirstWarriorOffScreen = true;  // Mark the flag
+				//for (auto& warrior : warriors)
+				//{
+				//	for (unsigned int i = 0; i < warriors.size(); ++i) {
+				//		warriors[i].x = 0;  // Reset to the starting X position (left of the screen)
+				//		warriors[i].y = 10 + (i * 100);  // Reset the Y position with spacing
+				//		warriors[i].speed = GetRandomFloat(80.0f, 100.0f);  // Re-randomize speed
+				//	}
+
+				//}
+			}
 		}
 
 		std::string fps = "Frames per Second : " + std::to_string(t->GetFPS());

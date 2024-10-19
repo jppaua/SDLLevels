@@ -82,7 +82,7 @@ void Renderer::RenderFillRectangle(Rect _rect)
     m_destRect.y = _rect.Y1;
     m_destRect.w = _rect.X2 - _rect.X1;
     m_destRect.h = _rect.Y2 - _rect.Y1;
-    SDL_RenderDrawRect(m_renderer, &m_destRect);
+    SDL_RenderFillRect(m_renderer, &m_destRect);
 }
 
 SDL_Texture* Renderer::GetSDLTexture(Texture* _texture)
@@ -112,7 +112,10 @@ void Renderer::RenderTexture(Texture* _texture, Point point) {
     m_destRect.w = _texture->GetImageInfo()->Width;
     m_destRect.h = _texture->GetImageInfo()->Height;
 
-    M_ASSERT(((SDL_RenderCopyEx(m_renderer, GetSDLTexture(_texture), NULL, &m_destRect, 0, NULL, SDL_FLIP_HORIZONTAL)) >= 0), "Could not render texture");
+    if (m_destRect.w < 50) m_destRect.w = 100;
+    if (m_destRect.h < 50) m_destRect.h = 100;
+
+    M_ASSERT(((SDL_RenderCopyEx(m_renderer, GetSDLTexture(_texture), NULL, &m_destRect, 0, NULL, SDL_FLIP_NONE)) >= 0), "Could not render texture");
 }
 
 // Code for WEEK 7 for Graphics Core 2
@@ -137,10 +140,14 @@ void Renderer::RenderTexture(Texture* _texture, Rect _rect)
 {
     m_destRect.x = _rect.X1;
     m_destRect.y = _rect.Y1;
-    m_destRect.w = _rect.X2;
-    m_destRect.h = _rect.Y2;
+    m_destRect.w = _rect.X2 - _rect.X1;
+    m_destRect.h = _rect.Y2 - _rect.Y1;
+
+    if (m_destRect.w < 50) m_destRect.w = 100;
+    if (m_destRect.h < 50) m_destRect.h = 100;
+
     M_ASSERT(((SDL_RenderCopyEx(m_renderer, GetSDLTexture(_texture), NULL, 
-        &m_destRect, 0, NULL, SDL_FLIP_HORIZONTAL)) >= 0), "Could not render texture");
+        &m_destRect, 0, NULL, SDL_FLIP_NONE)) >= 0), "Could not render texture");
 }
 
 void Renderer::RenderTexture(Texture* _texture, Rect _srcRect, Rect _destRect)
@@ -154,6 +161,10 @@ void Renderer::RenderTexture(Texture* _texture, Rect _srcRect, Rect _destRect)
     m_srcRect.y = _texture->GetImageInfo()->Height - _srcRect.Y2;
     m_srcRect.w = _srcRect.X2 - _srcRect.X1;
     m_srcRect.h = _srcRect.Y2 - _srcRect.Y1;
+
+    if (m_destRect.w < 50) m_destRect.w = 100;
+    if (m_destRect.h < 50) m_destRect.h = 100;
+
     M_ASSERT(((SDL_RenderCopyEx(m_renderer, GetSDLTexture(_texture), &m_srcRect,
-        &m_destRect, 0, NULL, SDL_FLIP_HORIZONTAL)) >= 0), "Could not render texture");
+        &m_destRect, 0, NULL, SDL_FLIP_VERTICAL)) >= 0), "Could not render texture");
 }
