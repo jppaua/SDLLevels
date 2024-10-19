@@ -32,6 +32,8 @@ private:
 	short m_clipEnd;
 	float m_clipCurrent;
 	float m_clipSpeed;
+	float m_timeAccumulator = 0.0f;  
+	float m_frameDuration = 1.0f / 30.0f;  
 };
 
-#endif // !SPRITEANIM_H
+#endif 

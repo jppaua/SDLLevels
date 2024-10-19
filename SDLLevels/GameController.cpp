@@ -4,17 +4,26 @@
 #include "SpriteSheet.h"
 #include "TTFont.h"
 #include "Timing.h"
-#include <random>  // Required for random number generation
+#include <random>  
 
 struct Warrior {
-    float x;       // X position of the warrior
-    float y;       // Y position of the warrior
-    float speed;   // Speed of the warrior
-    float direction; // Direction of movement (1 for right)
-    float animationSpeed; // Animation speed of the warrior
+    float x;       
+    float y;      
+    float speed;   
+    float direction; 
+    float animationSpeed; 
+    bool isDead;   
 };
 
-// Function to generate a random float between min and max
+struct Rock {
+    float x;            
+    float y;           
+    float speed;        
+    float animationSpeed; 
+    bool active;        
+};
+
+
 float GetRandomFloat(float min, float max) {
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -27,7 +36,7 @@ GameController::GameController() {
 }
 
 void GameController::RunGame() {
-    AssetController::Instance().Initialize(10000000);	// Allocate 10MB
+    AssetController::Instance().Initialize(10000000);  
     Renderer* r = &Renderer::Instance();
     Timing* t = &Timing::Instance();
     r->Initialize(1920, 1080);
@@ -40,25 +49,48 @@ void GameController::RunGame() {
     SpriteSheet::Pool = new ObjectPool1<SpriteSheet>();
     SpriteAnim::Pool = new ObjectPool1<SpriteAnim>();
 
-    SpriteSheet* sheet = SpriteSheet::Pool->GetResource();
-    sheet->Load("../Assets/Textures/Warrior.tga");
-    sheet->SetSize(17, 6, 69, 44);
-    sheet->AddAnimation(EN_AN_RUN, 6, 8, 6.0f);
+    
+    SpriteSheet* warriorSheet = SpriteSheet::Pool->GetResource();
+    warriorSheet->Load("../Assets/Textures/Warrior.tga");
+    warriorSheet->SetSize(17, 6, 69, 44);
+    warriorSheet->AddAnimation(EN_AN_RUN, 6, 8, 0.3f);
+    warriorSheet->AddAnimation(EN_AN_DEATH, 14, 6, 0.4f);  
 
+    
+    SpriteSheet* rockSheet = SpriteSheet::Pool->GetResource();
+    rockSheet->Load("../Assets/Textures/Rock.tga");
+    rockSheet->SetSize(1, 6, 64, 64); 
+    rockSheet->AddAnimation(EN_AN_ROCK_FALL, 0, 6, 2.0f);
+
+    
     std::vector<Warrior> warriors;
     for (unsigned int i = 0; i < 10; i++) {
         Warrior w;
-        w.x = 0; // Start at the left of the screen
+        w.x = 0; 
         w.y = 10 + (i * 100);
         w.speed = GetRandomFloat(80.0f, 100.0f);
-        w.direction = 1.0f; // Always move right
+        w.direction = 1.0f; 
         w.animationSpeed = 4.8f + ((w.speed - 80.0f) / 20.0f) * (6.0f - 4.8f);
+        w.isDead = false;  
         warriors.push_back(w);
+    }
+
+    
+    std::vector<Rock> rocks;
+    for (unsigned int i = 0; i < 10; i++) {
+        Rock r;
+        r.x = 50 + (i * 100);  
+        r.y = 0;               
+        r.speed = GetRandomFloat(80.0f, 100.0f);  
+        r.animationSpeed = 4.8f + ((r.speed - 80.0f) / 20.0f) * (6.0f - 4.8f);
+        r.active = true;  
+        rocks.push_back(r);
     }
 
     std::ofstream autoSaveStream("Level1.bin", std::ios::out | std::ios::binary);
     bool isAutoSaved = false;
-    bool level2Loaded = false;
+    bool level2Loaded = false;  
+    bool rocksInitialized = false;  
 
     float autoSaveTimer = 0.0f;
     float gameTime = 0.0f;
@@ -67,62 +99,98 @@ void GameController::RunGame() {
         t->Tick();
         SDL_PollEvent(&m_sdlEvent);
 
-        r->ClearScreen();
-        autoSaveTimer += t->GetDeltaTime();
-        gameTime += t->GetDeltaTime();
+        
+        float deltaTime = t->GetDeltaTime();
 
-        // Auto-save after 5 seconds
+        
+        if (deltaTime > 0.1f) {
+            deltaTime = 0.1f;
+        }
+
+        r->ClearScreen();
+        autoSaveTimer += deltaTime;
+        gameTime += deltaTime;
+
+        
         if (autoSaveTimer >= 5.0f && !isAutoSaved) {
-            // Auto-save the level state
             isAutoSaved = true;
-            autoSaveTimer = 0.0f; // Reset timer
+            autoSaveTimer = 0.0f; 
         }
 
         bool anyWarriorOffScreen = false;
 
-        // Check if any warrior goes off-screen
+        
         for (auto& warrior : warriors) {
             if (warrior.x > r->GetWindowSize().X) {
                 anyWarriorOffScreen = true;
-                break;  // Exit the loop once we find the first warrior off-screen
+                break;  
             }
         }
 
-        // If any warrior is off-screen and Level 2 hasn't been loaded yet, transition
+        
         if (!level2Loaded && anyWarriorOffScreen) {
             level2Loaded = true;
-            LoadLevel2(); // Load Level 2
+            LoadLevel2();  
 
-            gameTime = 0.0f;        // Reset the game time
-            isAutoSaved = false;    // Reset auto-save flag
-            autoSaveTimer = 0.0f;   // Reset the auto-save timer
+            gameTime = 0.0f;        
+            isAutoSaved = false;    
+            autoSaveTimer = 0.0f;   
 
-            // Reset all warriors to starting positions and speeds
+            
             for (unsigned int i = 0; i < warriors.size(); ++i) {
-                warriors[i].x = 0;  // Reset to starting X position
-                warriors[i].y = 10 + (i * 100);  // Reset Y position
-                warriors[i].speed = GetRandomFloat(80.0f, 100.0f);  // Re-randomize speed
+                warriors[i].x = 0;  
+                warriors[i].y = 10 + (i * 100);  
+                warriors[i].speed = GetRandomFloat(80.0f, 100.0f);  
+                warriors[i].isDead = false;  
             }
+
+            
+            rocksInitialized = true;
         }
 
-        // Set the background color based on the current level
+       
         if (level2Loaded) {
-            r->SetDrawColor(Color(0, 128, 0, 255));  // Set background to green
+            r->SetDrawColor(Color(0, 128, 0, 255));  
         }
         else {
-            r->SetDrawColor(Color(128, 128, 128, 255));  // Default grey background
+            r->SetDrawColor(Color(128, 128, 128, 255));
         }
 
-        // Render warriors
+       
         for (auto& warrior : warriors) {
-            warrior.x += warrior.speed * warrior.direction * t->GetDeltaTime(); // Move the warrior
+            if (warrior.isDead) continue; 
 
-            // Adjusted animation speed
-            r->RenderTexture(sheet, sheet->Update(EN_AN_RUN, warrior.animationSpeed * t->GetDeltaTime()),
+            warrior.x += warrior.speed * warrior.direction * deltaTime;  
+            r->RenderTexture(warriorSheet, warriorSheet->Update(EN_AN_RUN, warrior.animationSpeed * deltaTime),
                 Rect(warrior.x, warrior.y, static_cast<int>(69 * 1.8), static_cast<int>(44 * 1.8)));
         }
 
-        // Display FPS, Game Time, and Auto-save status
+        
+        if (rocksInitialized) {
+            for (auto& rock : rocks) {
+                if (!rock.active) continue;  
+
+                rock.y += rock.speed * deltaTime;  
+
+                
+                for (auto& warrior : warriors) {
+                    if (!warrior.isDead && rock.y >= warrior.y && rock.y <= (warrior.y + 44) &&
+                        rock.x >= warrior.x && rock.x <= (warrior.x + 69)) {
+                        
+                        warrior.isDead = true;
+                        rock.active = false;
+                        r->RenderTexture(warriorSheet, warriorSheet->Update(EN_AN_DEATH, warrior.animationSpeed * deltaTime),
+                            Rect(warrior.x, warrior.y, static_cast<int>(69 * 1.8), static_cast<int>(44 * 1.8)));
+                    }
+                }
+
+                
+                r->RenderTexture(rockSheet, rockSheet->Update(EN_AN_ROCK_FALL, rock.animationSpeed * deltaTime),
+                    Rect(rock.x, rock.y, static_cast<int>(64 * 1.0f), static_cast<int>(64 * 1.0f)));
+            }
+        }
+
+        
         std::string fps = "Frames per Second : " + std::to_string(t->GetFPS());
         font->Write(r->GetRenderer(), fps.c_str(), SDL_Color{ 0, 0, 255 }, SDL_Point{ 0, 0 });
 
@@ -135,9 +203,6 @@ void GameController::RunGame() {
         SDL_RenderPresent(r->GetRenderer());
     }
 
-
-
-
     delete SpriteAnim::Pool;
     delete SpriteSheet::Pool;
 
@@ -146,9 +211,9 @@ void GameController::RunGame() {
 }
 
 void GameController::LoadLevel2() {
-    Renderer::Instance().SetDrawColor(Color(0, 128, 0, 255));  // Set background to green
+    Renderer::Instance().SetDrawColor(Color(0, 128, 0, 255));  
 }
 
 GameController::~GameController() {
-    // Clean up any remaining resources
+    
 }

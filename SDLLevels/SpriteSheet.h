@@ -20,7 +20,8 @@ enum AnimationNames
     EN_AN_DASH,
     EN_AN_DASH_ATTACH,
     EN_AN_SLIDE,
-    EN_AN_LADDDER_GRAB
+    EN_AN_LADDDER_GRAB,
+    EN_AN_ROCK_FALL
 };
 
 class SpriteSheet : public Texture 
