@@ -151,7 +151,6 @@ copy /Y "$(SolutionDir)External\SDL2_ttf-2.22.0\lib\x64\SDL2_ttf.dll" </Command>
     <ClCompile Include="AssetController.cpp" />
     <ClCompile Include="FileController.cpp" />
     <ClCompile Include="GameController.cpp" />
-    <ClCompile Include="Level.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Resource.cpp" />
     <ClCompile Include="SDLLevels.cpp" />
@@ -162,7 +161,6 @@ copy /Y "$(SolutionDir)External\SDL2_ttf-2.22.0\lib\x64\SDL2_ttf.dll" </Command>
     <ClCompile Include="TGAReader.cpp" />
     <ClCompile Include="Timing.cpp" />
     <ClCompile Include="TTFont.cpp" />
-    <ClCompile Include="Unit.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Asset.h" />
@@ -170,7 +168,6 @@ copy /Y "$(SolutionDir)External\SDL2_ttf-2.22.0\lib\x64\SDL2_ttf.dll" </Command>
     <ClInclude Include="BasicStructs.h" />
     <ClInclude Include="FileController.h" />
     <ClInclude Include="GameController.h" />
-    <ClInclude Include="Level.h" />
     <ClInclude Include="ObjectPool1.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Resource.h" />
@@ -184,7 +181,6 @@ copy /Y "$(SolutionDir)External\SDL2_ttf-2.22.0\lib\x64\SDL2_ttf.dll" </Command>
     <ClInclude Include="TGAReader.h" />
     <ClInclude Include="Timing.h" />
     <ClInclude Include="TTFont.h" />
-    <ClInclude Include="Unit.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

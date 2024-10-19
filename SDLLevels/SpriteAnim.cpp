@@ -36,10 +36,6 @@ void SpriteAnim::Update(float _deltaTime) {
         _deltaTime = 0.1f;
     }
 
-    std::cout << "Updating animation, deltaTime: " << _deltaTime
-        << ", clipSpeed: " << m_clipSpeed
-        << ", accumulated time: " << m_timeAccumulator << std::endl;
-
     m_timeAccumulator += _deltaTime;
 
     
@@ -52,9 +48,6 @@ void SpriteAnim::Update(float _deltaTime) {
         if (m_clipCurrent >= m_clipEnd) {
             m_clipCurrent = m_clipStart;
         }
-
-        std::cout << "Frame advanced to: " << m_clipCurrent
-            << ", time remaining in accumulator: " << m_timeAccumulator << std::endl;
     }
 }
 
