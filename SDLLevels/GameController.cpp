@@ -164,7 +164,7 @@ void GameController::RunGame() {
         for (auto& warrior : warriors) {
             if (warrior.isDead) {
                 if (warrior.isAnimatingDeath) {
-                    r->RenderTexture(warrior.animation, warrior.animation->Update(EN_AN_DEATH, warrior.animationSpeed * deltaTime),
+                    r->RenderWarriorTexture(warrior.animation, warrior.animation->Update(EN_AN_DEATH, warrior.animationSpeed * deltaTime),
                         Rect(warrior.x, warrior.y, static_cast<int>(69 * 1.8), static_cast<int>(44 * 1.8)));
 
                     
@@ -177,7 +177,7 @@ void GameController::RunGame() {
             }
 
             warrior.x += warrior.speed * warrior.direction * deltaTime;
-            r->RenderTexture(warrior.animation, warrior.animation->Update(EN_AN_RUN, warrior.animationSpeed * deltaTime),
+            r->RenderWarriorTexture(warrior.animation, warrior.animation->Update(EN_AN_RUN, warrior.animationSpeed * deltaTime),
                 Rect(warrior.x, warrior.y, static_cast<int>(69 * 1.8), static_cast<int>(44 * 1.8)));
         }
 
@@ -198,8 +198,11 @@ void GameController::RunGame() {
                     }
                 }
 
-                r->RenderTexture(rockSheet, rockSheet->Update(EN_AN_ROCK_FALL, deltaTime),
-                    Rect(rock.x, rock.y, 20, 20));
+                Rect rockSrc = rockSheet->Update(EN_AN_ROCK_FALL, rock.animationSpeed * deltaTime);
+                int rockWidth = static_cast<int>(20 * 0.6f);
+                int rockHeight = static_cast<int>(20 * 0.6f);
+
+                r->RenderRockTexture(rockSheet, rockSrc, Rect(rock.x, rock.y, rock.x + rockWidth, rock.y + rockHeight));
             }
         }
 

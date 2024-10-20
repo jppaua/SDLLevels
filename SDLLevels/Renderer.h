@@ -30,7 +30,8 @@ public:
 	void RenderFillRectangle(Rect _rect);
 	void RenderTexture(Texture* _texture, Point _point);
 	void RenderTexture(Texture* _texture, Rect _rect);
-	void RenderTexture(Texture* _texture, Rect _srcRect, Rect _destRect);
+	void RenderWarriorTexture(Texture* _texture, Rect _srcRect, Rect _destRect);
+	void RenderRockTexture(Texture* _texture, Rect _srcRect, Rect _destRect);
 	void Shutdown();
 
 private:
