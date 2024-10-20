@@ -58,7 +58,7 @@ void GameController::RunGame() {
 
     SpriteSheet* rockSheet = SpriteSheet::Pool->GetResource();
     rockSheet->Load("../Assets/Textures/Rock.tga");
-    rockSheet->SetSize(1, 4, 20, 19);
+    rockSheet->SetSize(1, 4, 20, 20);
     rockSheet->AddAnimation(EN_AN_ROCK_FALL, 0, 4, 0.5f);
 
     std::vector<Warrior> warriors;
@@ -188,7 +188,7 @@ void GameController::RunGame() {
                 }
 
                 r->RenderTexture(rockSheet, rockSheet->Update(EN_AN_ROCK_FALL, deltaTime),
-                    Rect(rock.x, rock.y, 20, 19));
+                    Rect(rock.x, rock.y, 20, 20));
 
             }
         }
