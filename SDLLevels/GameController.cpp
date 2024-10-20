@@ -78,7 +78,7 @@ void GameController::RunGame() {
     std::vector<Rock> rocks;
     for (unsigned int i = 0; i < 10; i++) {
         Rock r;
-        r.x = 50 + (i * 150);
+        r.x = 50 + (i * 100);
         r.y = 0;
         r.speed = GetRandomFloat(80.0f, 100.0f);
         r.animationSpeed = 4.8f + ((r.speed - 80.0f) / 20.0f) * (6.0f - 4.8f);
