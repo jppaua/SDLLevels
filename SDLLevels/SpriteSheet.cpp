@@ -31,11 +31,11 @@ void SpriteSheet::AddAnimation(AnimationNames _name, short _clipStart, short _cl
     m_animations[_name] = anim;
 }
 
-Rect SpriteSheet::Update(AnimationNames _name, float _deltaTime) 
+Rect SpriteSheet::Update(AnimationNames _name, float _deltaTime)
 {
     short s = m_animations[_name]->GetClipCurrent();
-    short posX = s % m_columns * m_clipSizeX;
-    short posY = s / m_columns * m_clipSizeY;
+    short posX = (s % m_columns) * m_clipSizeX;
+    short posY = (s / m_columns) * m_clipSizeY;
 
     Rect r = Rect(posX, posY, posX + m_clipSizeX, posY + m_clipSizeY);
 
