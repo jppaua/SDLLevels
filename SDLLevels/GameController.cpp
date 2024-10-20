@@ -16,6 +16,7 @@ struct Warrior {
     bool isDead;
     bool isAnimatingDeath;
     float deathTimer;
+    SpriteSheet* animation;
 };
 
 struct Rock {
@@ -51,12 +52,6 @@ void GameController::RunGame() {
     SpriteSheet::Pool = new ObjectPool1<SpriteSheet>();
     SpriteAnim::Pool = new ObjectPool1<SpriteAnim>();
 
-    SpriteSheet* warriorSheet = SpriteSheet::Pool->GetResource();
-    warriorSheet->Load("../Assets/Textures/Warrior.tga");
-    warriorSheet->SetSize(17, 6, 69, 44);
-    warriorSheet->AddAnimation(EN_AN_RUN, 6, 8, 0.3f);
-    warriorSheet->AddAnimation(EN_AN_DEATH, 27, 10, 0.4f);
-
     SpriteSheet* rockSheet = SpriteSheet::Pool->GetResource();
     rockSheet->Load("../Assets/Textures/Rock.tga");
     rockSheet->SetSize(1, 4, 20, 20);
@@ -73,6 +68,13 @@ void GameController::RunGame() {
         w.isDead = false;
         w.isAnimatingDeath = false;
         w.deathTimer = 0.0f;
+
+        w.animation = SpriteSheet::Pool->GetResource();
+        w.animation->Load("../Assets/Textures/Warrior.tga");
+        w.animation->SetSize(17, 6, 69, 44);
+        w.animation->AddAnimation(EN_AN_RUN, 6, 8, 0.3f);
+        w.animation->AddAnimation(EN_AN_DEATH, 27, 10, 0.4f);
+
         warriors.push_back(w);
     }
 
@@ -162,12 +164,11 @@ void GameController::RunGame() {
         for (auto& warrior : warriors) {
             if (warrior.isDead) {
                 if (warrior.isAnimatingDeath) {
-                    r->RenderTexture(warriorSheet, warriorSheet->Update(EN_AN_DEATH, warrior.animationSpeed * deltaTime),
+                    r->RenderTexture(warrior.animation, warrior.animation->Update(EN_AN_DEATH, warrior.animationSpeed * deltaTime),
                         Rect(warrior.x, warrior.y, static_cast<int>(69 * 1.8), static_cast<int>(44 * 1.8)));
 
-                    warrior.deathTimer += deltaTime;
-
-                    if (warrior.deathTimer >= 2.0f) {
+                    
+                    if (warrior.animation->GetCurrentClip(EN_AN_DEATH) >= 36) {
                         warrior.isAnimatingDeath = false;
                     }
                 }
@@ -176,7 +177,7 @@ void GameController::RunGame() {
             }
 
             warrior.x += warrior.speed * warrior.direction * deltaTime;
-            r->RenderTexture(warriorSheet, warriorSheet->Update(EN_AN_RUN, warrior.animationSpeed * deltaTime),
+            r->RenderTexture(warrior.animation, warrior.animation->Update(EN_AN_RUN, warrior.animationSpeed * deltaTime),
                 Rect(warrior.x, warrior.y, static_cast<int>(69 * 1.8), static_cast<int>(44 * 1.8)));
         }
 
