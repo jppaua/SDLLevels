@@ -5,6 +5,7 @@
 #include "TTFont.h"
 #include "Timing.h"
 #include <random>
+#include <SDL.h>
 
 struct Warrior {
     float x;
@@ -114,11 +115,14 @@ void GameController::RunGame() {
         }
 
         bool anyWarriorOffScreen = false;
+        bool allWarriorsDead = true;
 
         for (auto& warrior : warriors) {
             if (warrior.x > r->GetWindowSize().X) {
                 anyWarriorOffScreen = true;
-                break;
+            }
+            if (!warrior.isDead) {
+                allWarriorsDead = false;
             }
         }
 
@@ -140,6 +144,12 @@ void GameController::RunGame() {
             }
 
             rocksInitialized = true;
+            anyWarriorOffScreen = false;
+        }
+
+        if (level2Loaded && (anyWarriorOffScreen || allWarriorsDead)) {
+            SDL_Quit();
+            return;
         }
 
         if (level2Loaded) {
@@ -189,7 +199,6 @@ void GameController::RunGame() {
 
                 r->RenderTexture(rockSheet, rockSheet->Update(EN_AN_ROCK_FALL, deltaTime),
                     Rect(rock.x, rock.y, 20, 20));
-
             }
         }
 
